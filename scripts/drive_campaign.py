@@ -1,0 +1,85 @@
+"""Boot the runner and drive the menus to a campaign start with a scripted pad file.
+
+Presses X through the intros, then alternates Start and X through the menus until the
+mission loader binds MPEG again and the menu presses stop.
+Stops on a missing-code report or after the time limit, keeping the process window optional.
+Usage: python scripts/drive_campaign.py TAG [SECONDS] [--keep]
+"""
+import os
+import pathlib
+import subprocess
+import sys
+import time
+
+root = pathlib.Path(__file__).resolve().parent.parent
+tag = sys.argv[1]
+limit = float(sys.argv[2]) if len(sys.argv) > 2 and sys.argv[2][0].isdigit() else 600.0
+keep = '--keep' in sys.argv
+iso = r"D:\ISO\Call of Duty - World at War - Final Fronts (USA, Canada) (En,Fr)\Call of Duty - World at War - Final Fronts (USA, Canada) (En,Fr).iso"
+pad = root / f"analysis/pad-{tag}.txt"
+err = root / f"analysis/boot-{tag}.log"
+out = root / f"analysis/boot-{tag}-out.log"
+pad.write_text("0\n")
+env = dict(os.environ)
+env.update(PS2X_PAD_FILE=str(pad), PS2X_FRAME_DUMP=f"analysis/frame-{tag}.png", PS2X_WINDOW_MODE="windowed",
+           PS2X_VU_DUMP=f"analysis/vu1-code-{tag}.bin")
+proc = subprocess.Popen([str(root / "build/game/ps2xRuntime/ps2EntryRunner.exe"), str(root / "disc-root/SLUS_217.46"), iso],
+                        cwd=root, env=env, stdout=out.open("w"), stderr=err.open("w"))
+
+
+def log():
+    return err.read_text(errors="replace")
+
+
+def press(mask, hold=0.4, gap=1.6):
+    pad.write_text(f"{mask:x}\n")
+    time.sleep(hold)
+    pad.write_text("0\n")
+    time.sleep(gap)
+
+
+start = time.time()
+stage = "title"
+binds = 0
+while time.time() - start < limit and proc.poll() is None:
+    text = log()
+    missing = [l for l in text.splitlines() if "missing-target" in l and "target=0x0 " not in l]
+    if missing or "Unhandled" in text:
+        stage = "missing"
+        break
+    binds = text.count("[mpeg:bind]")
+    if stage == "title":
+        if binds >= 1:
+            # Skip the intro video, then leave the title with Start.
+            for _ in range(6):
+                press(0x4000, gap=2.6)
+            press(0x8, gap=3)
+            stage = "menus"
+            menu_presses = 0
+        else:
+            press(0x4000, gap=5)
+    elif stage == "menus":
+        # Save warning, profile, campaign, New Game, difficulty (real-time menus).
+        if menu_presses >= 8:
+            stage = "loading"
+            pad.write_text("0\n")
+        else:
+            press(0x4000, gap=2.6)
+            menu_presses += 1
+            frame = root / f"analysis/frame-{tag}.png"
+            if frame.exists():
+                (root / f"analysis/frame-{tag}-menu{menu_presses}.png").write_bytes(frame.read_bytes())
+    else:
+        # Keep a few snapshots of the mission screen; the dump file is overwritten.
+        time.sleep(30)
+        frame = root / f"analysis/frame-{tag}.png"
+        if frame.exists():
+            snapshot = root / f"analysis/frame-{tag}-{int(time.time() - start):04d}.png"
+            snapshot.write_bytes(frame.read_bytes())
+elapsed = time.time() - start
+print(f"stage={stage} binds={binds} elapsed={elapsed:.0f}s alive={proc.poll() is None}")
+for line in log().splitlines():
+    if "missing-target" in line or "Unhandled" in line or "exception" in line.lower():
+        print(line[:600])
+if not keep and proc.poll() is None:
+    proc.kill()
