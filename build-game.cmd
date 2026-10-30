@@ -28,9 +28,9 @@ if errorlevel 1 exit /b 1
 goto configure
 :fastcheck
 rem Configuring is only needed the first time; afterwards ninja re-runs CMake itself when needed.
-if exist "%~dp0build\game\build.ninja" goto build
+rem Always reconfigure the shared extracted-files adapter.
 :configure
-cmake -S "%~dp0..\third_party\PS2Recomp" -B "%~dp0build\game" -G Ninja -DCMAKE_BUILD_TYPE=Release -DPS2X_ENABLE_LTCG=OFF -DPS2X_FAST_LINK=ON "-DPS2X_RUNNER_DIR=%RUNNER%" "-DPS2X_GAME_CHUNK_DIR=%CHUNKS_CM%" "-DPS2X_GAME_LIB_PREBUILT=%GAMELIB_CM%"
+cmake -S "%~dp0..\third_party\PS2Recomp" -B "%~dp0build\game" -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="%~dp0tools/port-installer/runtime/defer_runtime.cmake" -G Ninja -DCMAKE_BUILD_TYPE=Release -DPS2X_ENABLE_LTCG=OFF -DPS2X_FAST_LINK=ON "-DPS2X_RUNNER_DIR=%RUNNER%" "-DPS2X_GAME_CHUNK_DIR=%CHUNKS_CM%" "-DPS2X_GAME_LIB_PREBUILT=%GAMELIB_CM%"
 if errorlevel 1 exit /b 1
 :build
 if /i not "%MODE%"=="full" goto exe
