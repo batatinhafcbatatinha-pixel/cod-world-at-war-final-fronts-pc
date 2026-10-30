@@ -18,6 +18,10 @@ O adaptador compartilhado de `tools/port-installer/runtime` traduz essas leitura
 
 O ELF MIPS original não é aceito pelo provider Ghidra do REA disponível nesta instalação Windows. Os endereços do SDK acima vêm do analisador local já existente, não de uma nova decompilação pelo REA. A investigação REA da camada nativa PE é registrada separadamente no relatório compartilhado. Resultado de compilação ou chegada ao menu não deve ser anunciado como validação completa de campanha.
 
-## Estado publicado
+## Validação concluída
 
-Os231 arquivos extraídos foram comparados por SHA-256 com o inventário anterior. O leitor C++ comparou768 amostras de ranges com os arquivos comuns sem abrirISO. A build anterior do adaptador concluiu ligação; a recompilação final com fallbackISO desativado estava em andamento no momento deste commit. Ainda falta concluir e inspecionar o teste de campanha sem imagem.
+Os231 arquivos extraídos foram comparados por SHA-256 com o inventário anterior. O leitor C++ comparou768 amostras de ranges com os arquivos comuns sem abrir ISO. A compilação final com fallback de imagem desativado concluiu.
+
+Foram executados dois testes do mesmo binário, sem argumento de ISO e com PS2X_CD_IMAGE vazio: um de127s com o índice de setores original, outro de98s com o índice recriado exclusivamente da pasta via prepare_folder.py --rebuild-layout. Ambos chegaram ao título e avançaram ao carregamento; foram registrados dois binds MPEG. Nenhum registrou unresolved LBN, open failed ou imagem configurada. O segundo usou os novos LBNs sintéticos, sem depender do inventário antigo.
+
+A captura posterior ao carregamento ficou preta e o log inclui um diagnóstico de thread que chegou a PC0. A campanha não foi validada, nem a causa desse problema atribuída à remoção de ISO. O exitCode1 dos relatórios foi causado pelo encerramento imposto pelo teste no limite de tempo. Registros privados: analysis/report-folder-final.json e analysis/report-folder-synthetic-final.json. Nenhuma captura, exportação original ou arquivo de jogo é distribuído neste repositório.
