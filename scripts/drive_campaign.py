@@ -6,6 +6,8 @@ Stops on a missing-code report or after the time limit, keeping the process wind
 Usage: python scripts/drive_campaign.py TAG [SECONDS] [--keep]
 """
 import os
+import hashlib
+import json
 import pathlib
 import subprocess
 import sys
@@ -15,15 +17,15 @@ root = pathlib.Path(__file__).resolve().parent.parent
 tag = sys.argv[1]
 limit = float(sys.argv[2]) if len(sys.argv) > 2 and sys.argv[2][0].isdigit() else 600.0
 keep = '--keep' in sys.argv
-iso = r"D:\ISO\Call of Duty - World at War - Final Fronts (USA, Canada) (En,Fr)\Call of Duty - World at War - Final Fronts (USA, Canada) (En,Fr).iso"
 pad = root / f"analysis/pad-{tag}.txt"
 err = root / f"analysis/boot-{tag}.log"
 out = root / f"analysis/boot-{tag}-out.log"
 pad.write_text("0\n")
 env = dict(os.environ)
-env.update(PS2X_PAD_FILE=str(pad), PS2X_FRAME_DUMP=f"analysis/frame-{tag}.png", PS2X_WINDOW_MODE="windowed",
+env.update(PS2X_CD_IMAGE="", PS2X_PAD_FILE=str(pad), PS2X_FRAME_DUMP=f"analysis/frame-{tag}.png", PS2X_WINDOW_MODE="windowed",
            PS2X_VU_DUMP=f"analysis/vu1-code-{tag}.bin")
-proc = subprocess.Popen([str(root / "build/game/ps2xRuntime/ps2EntryRunner.exe"), str(root / "disc-root/SLUS_217.46"), iso],
+command = [str(root / "build/game/ps2xRuntime/ps2EntryRunner.exe"), str(root / "game_files/SLUS_217.46")]
+proc = subprocess.Popen(command,
                         cwd=root, env=env, stdout=out.open("w"), stderr=err.open("w"))
 
 
@@ -83,3 +85,12 @@ for line in log().splitlines():
         print(line[:600])
 if not keep and proc.poll() is None:
     proc.kill()
+    proc.wait()
+
+report = dict(command=command, isoArgument=False, inheritedIsoEnvironment=False,
+              stage=stage, mpegBinds=binds, elapsed=round(elapsed, 2),
+              stopReason='time limit' if elapsed >= limit else 'missing code' if stage == 'missing' else 'exited',
+              exitCode=proc.poll(),
+              binarySha256=hashlib.sha256(pathlib.Path(command[0]).read_bytes()).hexdigest(),
+              limitations=['Script stage and log evidence do not prove gameplay; inspect saved frames.'])
+(root / f'analysis/report-{tag}.json').write_text(json.dumps(report, indent=2) + '\n')
