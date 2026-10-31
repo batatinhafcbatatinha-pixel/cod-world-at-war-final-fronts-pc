@@ -27,7 +27,7 @@ git clone --recurse-submodules https://github.com/batatinhafcbatatinha-pixel/cod
 ```
 
 `third_party/PS2Recomp` is a submodule: the [PS2Recomp fork](https://github.com/batatinhafcbatatinha-pixel/PS2Recomp),
-branch `native-ports`, with the runtime changes this port needs (Linux included: SSE4.1 on GCC/Clang, a portable
+branch `macos`, with the runtime changes this port needs (Linux included: SSE4.1 on GCC/Clang, a portable
 `static_assert`, a 64 MiB game-thread stack on glibc, overridable with `PS2X_THREAD_STACK_MB`). Without the
 submodule checked out, `project/CMakeLists.txt` falls back to a shared `../third_party/PS2Recomp` next to the game
 folder.

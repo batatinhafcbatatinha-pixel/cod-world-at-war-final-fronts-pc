@@ -12,7 +12,7 @@ An experimental port of the PlayStation 2 game *Call of Duty: World at War — F
 - EE (R5900) code: 81,680 functions recompiled ahead of time to C++, compiled into a game library and linked with the PS2Recomp runtime.
 - Graphics: optional hardware GS renderer (`PS2X_GS=hw`) and native VU1 blocks adopted from the God of War native port; the stock runtime GS is still available.
 - Known issues: the main thread occasionally dies during videos (about 1 in 11 runs); some large stretched polygons remain in the scene; parts of the renderer are slow. IOP and VU still run through interpreters in the runtime, so this is not a fully native port.
-- Windows x64 only.
+- Developed on Windows x64. [Linux](LINUX.md) builds use the same sources but the full game has not been built or run there. [macOS](MACOS.md) build files are included: experimental, and not compiled or run with this game's code yet.
 
 ## What is in this repository
 
@@ -21,7 +21,7 @@ An experimental port of the PlayStation 2 game *Call of Duty: World at War — F
 - `build-*.cmd`, `run-game.cmd`, `jogar-*.cmd`, `test-*.cmd` — local build, test and launch scripts.
 - [NOTES.md](NOTES.md) — the full development log (in Portuguese), including every runtime fix and diagnostic switch. [CONTROLES.md](CONTROLES.md) — controls and video shortcuts.
 
-The modified PS2Recomp runtime (memory layout, GS/VU1 integration, HLE fixes) lives in the author's local workspace and is not published here yet, so the scripts expect that workspace layout (`../third_party/PS2Recomp`).
+The modified PS2Recomp runtime (memory layout, GS/VU1 integration, HLE fixes) is the `third_party/PS2Recomp` submodule. The game-specific supplements include generated code and stay private, so the local scripts still expect the author's workspace layout (`../third_party/PS2Recomp`).
 
 ## Your game files
 

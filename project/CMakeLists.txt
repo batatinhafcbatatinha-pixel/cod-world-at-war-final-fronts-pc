@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 project(CodWawFinalFrontsNative LANGUAGES C CXX)
 get_filename_component(WORK_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
-# PS2Recomp runtime: the third_party/PS2Recomp submodule (fork, branch native-ports) when checked out,
+# PS2Recomp runtime: the third_party/PS2Recomp submodule (fork, branch macos) when checked out,
 # otherwise the shared checkout next to the game folders (../third_party/PS2Recomp).
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/PS2Recomp/CMakeLists.txt")
     set(CODWAW_PS2RECOMP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/PS2Recomp")
@@ -25,7 +25,18 @@ set(PS2X_BUILD_TEST OFF CACHE BOOL "No tests")
 set(PS2X_BUILD_STUDIO OFF CACHE BOOL "Runtime only")
 set(PS2X_ENABLE_DEBUG_UI OFF CACHE BOOL "Game frontend")
 set(PS2X_ENABLE_LTCG OFF CACHE BOOL "Bound build memory")
-set(PS2X_REQUIRE_GPU_RASTERIZER ON CACHE BOOL "Native host GPU")
+# macOS stops at OpenGL 4.1, so the GPU rasterizer (4.6 + fragment interlock) cannot run: the software GS is the renderer.
+if(APPLE)
+    set(CODWAW_SOFTWARE_GS_DEFAULT ON)
+else()
+    set(CODWAW_SOFTWARE_GS_DEFAULT OFF)
+endif()
+option(CODWAW_SOFTWARE_GS "Software GS only, no GPU scanout" ${CODWAW_SOFTWARE_GS_DEFAULT})
+if(CODWAW_SOFTWARE_GS)
+    set(PS2X_REQUIRE_GPU_RASTERIZER OFF CACHE BOOL "Software GS build" FORCE)
+else()
+    set(PS2X_REQUIRE_GPU_RASTERIZER ON CACHE BOOL "Native host GPU")
+endif()
 add_subdirectory("${CODWAW_PS2RECOMP_DIR}" ps2recomp)
 
 # Shared data installer: extracted files back all native EE/IOP optical reads.
